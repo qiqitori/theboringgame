@@ -14,7 +14,7 @@ my $USLEEP = 80000;
 my @STATE_CHANGE_PROBABILITY = (0.1, 0.4, 0.1);
 my $MAX_ALTITUDE = 120; # (1 == one column). Need a few more columns to display the current funds
 my $MOUNTAIN_CHAR = '.';
-my $MOUNTAIN_OUTLINE_CHAR = '#';
+my $MOUNTAIN_OUTLINE_CHAR = '|';
 my $PLAYER_CHAR = '@';
 my $UP_CMD = 'k';
 my $DOWN_CMD = 'j';
@@ -81,8 +81,12 @@ sub cleanup {
 $SIG{INT} = sub { check_game_over(1) };
 
 print "Welcome to the boring game.
-Press $UP_CMD to go up (costs \$" . -$UP_COST . "), $DOWN_CMD (rewards \$$DOWN_REWARD) to go down. Press $QUIT_CMD to quit.
-Boring tunnels costs " . -$TUNNEL_COST . " per row. Going up in tunnels costs an additional " . -$TUNNEL_UP_COST . ".\n\n";
+Press nothing to just fly (costs \$" . -$FLYING_COST . " per frame),
+$UP_CMD to go up (costs \$" . -$UP_COST . " plus the cost of flying),
+$DOWN_CMD to go down (rewards \$$DOWN_REWARD, but the cost of flying still applies),
+$QUIT_CMD to quit.
+Boring tunnels costs " . -$TUNNEL_COST . " per row.
+Going up in tunnels costs an additional " . -$TUNNEL_UP_COST . ".\n\n";
 
 ReadMode('cbreak');
 for (;;) {
@@ -117,13 +121,13 @@ for (;;) {
         adjust_funds($TUNNEL_COST);
         $tunnel_started_n_frames_ago++;
     } elsif ($player_altitude > $current_altitude) { # flying
-        if ($tunnel_started_n_frames_ago != -1) {
+        if ($tunnel_started_n_frames_ago != -1) { # just got out of tunnel
             adjust_funds($tunnel_started_n_frames_ago * $TUNNEL_REWARD_FACTOR);
             $tunnel_started_n_frames_ago = -1;
-        } else {
+        } else { # just regular flight
             adjust_funds($FLYING_COST);
         }
-    } elsif ($player_altitude == $current_altitude) {
+    } elsif ($player_altitude == $current_altitude) { # touching the mountain
         if ($tunnel_started_n_frames_ago == -1) { # if we aren't in a tunnel already, we just entered one!
             adjust_funds($TUNNEL_COST);
             $tunnel_started_n_frames_ago = 1;
